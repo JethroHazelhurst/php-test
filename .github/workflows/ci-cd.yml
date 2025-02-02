@@ -21,7 +21,7 @@ jobs:
         run: npm ci && npm run build
 
       - name: Deploy to Staging
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}  # Should be "jrupzdshbp"
@@ -49,7 +49,7 @@ jobs:
         run: npm ci && npm run build
 
       - name: Deploy to Production
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}  # Should be "yechgrbwse"
