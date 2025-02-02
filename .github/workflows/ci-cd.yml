@@ -1,0 +1,64 @@
+name: Deploy to Cloudways
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev
+
+      - name: Build assets
+        run: npm ci && npm run build
+
+      - name: Deploy to Staging
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}  # Should be "jrupzdshbp"
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          ssh_options: -o StrictHostKeyChecking=no
+          script: |
+            cd /home/master/applications/jrupzdshbp/public_html
+            git pull origin develop
+            composer install --no-dev
+            npm run build
+            ./vendor/bin/phinx migrate
+            sudo systemctl restart php-fpm
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev
+
+      - name: Build assets
+        run: npm ci && npm run build
+
+      - name: Deploy to Production
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}  # Should be "yechgrbwse"
+          key: ${{ secrets.PROD_SSH_KEY }}
+          ssh_options: -o StrictHostKeyChecking=no
+          script: |
+            cd /home/master/applications/yechgrbwse/public_html
+            git pull origin main
+            composer install --no-dev
+            npm run build
+            ./vendor/bin/phinx migrate -e production
+            sudo systemctl restart php-fpm

@@ -1,10 +1,9 @@
 <?php
 
-return
-[
+return [
     'paths' => [
-        'migrations' => '%%PHINX_CONFIG_DIR%%/db/migrations',
-        'seeds' => '%%PHINX_CONFIG_DIR%%/db/seeds'
+        'migrations' => '%%PHINX_CONFIG_DIR%%/database/migrations',
+        'seeds' => '%%PHINX_CONFIG_DIR%%/database/seeds'
     ],
     'environments' => [
         'default_migration_table' => 'phinxlog',
@@ -16,16 +15,18 @@ return
             'user' => 'root',
             'pass' => '',
             'port' => '3306',
-            'charset' => 'utf8',
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
         ],
         'development' => [
             'adapter' => 'mysql',
             'host' => 'localhost',
-            'name' => 'development_db',
+            'name' => 'todo_app',
             'user' => 'root',
             'pass' => '',
             'port' => '3306',
-            'charset' => 'utf8',
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
         ],
         'testing' => [
             'adapter' => 'mysql',
@@ -34,7 +35,8 @@ return
             'user' => 'root',
             'pass' => '',
             'port' => '3306',
-            'charset' => 'utf8',
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
         ]
     ],
     'version_order' => 'creation'
