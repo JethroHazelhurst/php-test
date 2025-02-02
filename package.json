@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm-run-all --parallel sass:watch browsersync",
     "sass:watch": "sass --watch scss:public/css",
-    "browsersync": "browser-sync start --proxy='localhost' --files='**/*'",
+    "browsersync": "browser-sync start --proxy='localhost/php-todo' --files='**/*'",
     "build": "sass scss:public/css --style=compressed && terser js/*.js -o public/js/app.min.js"
   },
   "keywords": [],
