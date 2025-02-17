@@ -1,42 +1,24 @@
-name: Deploy to Cloudways
-
+name: deploy
 on:
   push:
     branches:
       - develop
-      - main
-
 jobs:
-  deploy-staging:
-    if: github.ref == 'refs/heads/develop'
+  new-version-release:
     runs-on: ubuntu-latest
+ 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+ 
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Install Node Dependencies
-        run: npm ci
-
-      - name: Install Global Build Tools
-        run: npm install -g terser
-
-      - name: Install PHP Dependencies
-        run: composer install --no-dev
-
-      - name: Build and Prepare Dist Folder (Staging)
+ 
+      - name: Build dist folder
         run: |
-          npm run build
           mkdir -p dist
           rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
-
-      - name: Deploy to Staging via rsync
+ 
+      - name: Deploy with rsync
         env:
           remote_host: ${{ secrets.CLOUDWAYS_HOST }}
           remote_port: "22"
@@ -49,70 +31,3 @@ jobs:
           echo "$remote_key" > ~/.ssh/gh_actions_key
           chmod 600 ~/.ssh/gh_actions_key
           rsync -avzr -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
-
-  deploy-prod:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Install Node Dependencies
-        run: npm ci
-
-      - name: Install Global Build Tools
-        run: npm install -g terser
-
-      - name: Install PHP Dependencies
-        run: composer install --no-dev
-
-      - name: Build and Prepare Dist Folder (Production)
-        run: |
-          npm run build
-          mkdir -p dist
-          rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
-
-      - name: Setup SSH Key for Production (Master)
-        env:
-          remote_key: ${{ secrets.MASTER_SECRET_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$remote_key" > ~/.ssh/gh_actions_key
-          chmod 600 ~/.ssh/gh_actions_key
-
-      - name: Deploy to Production via rsync
-        env:
-          remote_host: ${{ secrets.PROD_HOST }}
-          remote_port: "22"
-          remote_user: ${{ secrets.MASTER_USER }}
-          local_dir: "dist/"
-          remote_dir: "/home/1325249.cloudwaysapps.com/prkwvvdmaj"
-        run: |
-          rsync -avzr --no-times --no-perms \
-            --exclude ".git" \
-            --exclude ".github" \
-            --exclude "node_modules" \
-            --exclude "scss" \
-            --exclude ".gitignore" \
-            -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" \
-            ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
-
-      - name: Run Post-Deployment Commands on Production
-        env:
-          remote_host: ${{ secrets.PROD_HOST }}
-          remote_port: "22"
-          remote_user: ${{ secrets.MASTER_USER }}
-          remote_key: ${{ secrets.MASTER_SECRET_KEY }}
-          remote_dir: "/home/1325249.cloudwaysapps.com/prkwvvdmaj/public_html"
-        run: |
-          mkdir -p ~/.ssh
-          echo "$remote_key" > ~/.ssh/gh_actions_key
-          chmod 600 ~/.ssh/gh_actions_key
-          ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no ${remote_user}@${remote_host} "cd ${remote_dir} && ./vendor/bin/phinx migrate -e production && sudo systemctl restart php-fpm"
