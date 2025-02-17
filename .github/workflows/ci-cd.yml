@@ -51,22 +51,11 @@ jobs:
               cp .env.example .env
             fi
 
-            echo "🔑 Generating application key..."
-            php artisan key:generate || true
-
-            echo "📂 Setting correct permissions..."
-            chmod -R 775 storage bootstrap/cache
-            chown -R www-data:www-data storage bootstrap/cache
-
             echo "🗄 Running Phinx migrations..."
             vendor/bin/phinx migrate || exit 1
 
             echo "🌱 Running Phinx seeders (if applicable)..."
             vendor/bin/phinx seed:run || true
-
-            echo "🧹 Clearing cache and optimizing configurations..."
-            php artisan cache:clear || true
-            php artisan config:cache || true
 
             echo "🔄 Restarting PHP-FPM to apply changes..."
             sudo service php8.2-fpm restart || true
