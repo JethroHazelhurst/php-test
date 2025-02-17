@@ -1,0 +1,18 @@
+{
+  "name": "php-todo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm-run-all --parallel sass:watch browsersync",
+    "sass:watch": "sass --watch scss:public/css",
+    "browsersync": "browser-sync start --config bs-config.js",
+    "build": "sass scss:public/css --style=compressed && terser js/*.js -o public/js/app.min.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "sass": "^1.83.4"
+  }
+}
