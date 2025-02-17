@@ -36,19 +36,27 @@ jobs:
           mkdir -p dist
           rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
 
-      - name: Deploy to Staging via rsync
+      - name: Deploy to Production via rsync
         env:
-          remote_host: ${{ secrets.STAGING_HOST }}
+          remote_host: ${{ secrets.PROD_HOST }}
           remote_port: "22"
-          remote_user: ${{ secrets.STAGING_USER }}
-          remote_key: ${{ secrets.STAGING_SSH_KEY }}
-          local_dir: "dist/"
-          remote_dir: "."   # Using current directory since SSH lands in public_html
+          remote_user: ${{ secrets.PROD_USER }}
+          remote_key: ${{ secrets.PROD_SSH_KEY }}
+          local_dir: "."  # the root of your local repo
+          remote_dir: "/home/1325249.cloudwaysapps.com/prkwvvdmaj"  # the "application" folder
         run: |
           mkdir -p ~/.ssh
           echo "$remote_key" > ~/.ssh/gh_actions_key
           chmod 600 ~/.ssh/gh_actions_key
-          rsync -avzr -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
+          rsync -avz --no-times --no-perms \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude "node_modules" \
+            --exclude "scss" \
+            --exclude ".gitignore" \
+            -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" \
+            ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
+
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
