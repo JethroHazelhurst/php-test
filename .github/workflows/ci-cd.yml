@@ -13,6 +13,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Debug GitHub Secrets (Non-Sensitive Info)
+        run: |
+          echo "Checking environment variables..."
+          echo "Server ID: ${{ secrets.CLOUDWAYS_SERVER_ID }}"
+          echo "App ID: ${{ secrets.CLOUDWAYS_APP_ID }}"
+          echo "Branch: ${{ secrets.CLOUDWAYS_BRANCH_NAME }}"
+          echo "Deploy Path: ${{ secrets.CLOUDWAYS_DEPLOY_PATH }}"
+      
       - name: Deploy to Cloudways
         uses: roelmagdaleno/cloudways-api-git-pull-action@v1.3.0
         with:
@@ -28,32 +36,42 @@ jobs:
         with:
           host: ${{ secrets.CLOUDWAYS_SERVER_IP }}
           username: master
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           script: |
-            cd ${{ secrets.CLOUDWAYS_DEPLOY_PATH }}
+            set -e  # Stop execution on error
 
-            echo "Pulling latest code..."
-            git pull origin develop
+            echo "✅ Connecting to Cloudways..."
+            cd ${{ secrets.CLOUDWAYS_DEPLOY_PATH }} || exit 1
 
-            echo "Installing PHP dependencies..."
-            composer install --no-dev --optimize-autoloader
+            echo "🔄 Pulling latest code from GitHub..."
+            git pull origin develop || exit 1
 
-            echo "Setting up environment variables..."
+            echo "📦 Installing PHP dependencies with Composer..."
+            composer install --no-dev --optimize-autoloader || exit 1
+
+            echo "🛠 Setting up environment variables..."
             if [ ! -f ".env" ]; then
               cp .env.example .env
             fi
 
-            echo "Running Phinx migrations..."
-            vendor/bin/phinx migrate || true
+            echo "🔑 Generating application key..."
+            php artisan key:generate || true
 
-            echo "Running Phinx seeders (if applicable)..."
+            echo "📂 Setting correct permissions..."
+            chmod -R 775 storage bootstrap/cache
+            chown -R www-data:www-data storage bootstrap/cache
+
+            echo "🗄 Running Phinx migrations..."
+            vendor/bin/phinx migrate || exit 1
+
+            echo "🌱 Running Phinx seeders (if applicable)..."
             vendor/bin/phinx seed:run || true
 
-            echo "Clearing and caching configurations..."
+            echo "🧹 Clearing cache and optimizing configurations..."
             php artisan cache:clear || true
             php artisan config:cache || true
 
-            echo "Restarting PHP-FPM to apply changes..."
+            echo "🔄 Restarting PHP-FPM to apply changes..."
             sudo service php8.2-fpm restart || true
 
-            echo "Deployment completed successfully!"
+            echo "🚀 Deployment completed successfully!"
