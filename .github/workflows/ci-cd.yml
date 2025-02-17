@@ -43,9 +43,6 @@ jobs:
             echo "✅ Connecting to Cloudways..."
             cd ${{ secrets.CLOUDWAYS_DEPLOY_PATH }} || exit 1
 
-            echo "🔄 Pulling latest code from GitHub..."
-            git pull origin develop || exit 1
-
             echo "📦 Installing PHP dependencies with Composer..."
             composer install --no-dev --optimize-autoloader || exit 1
 
