@@ -43,7 +43,7 @@ jobs:
           remote_user: ${{ secrets.STAGING_USER }}
           remote_key: ${{ secrets.STAGING_SSH_KEY }}
           local_dir: "dist/"
-          remote_dir: ${{ secrets.STAGING_PATH }}
+          remote_dir: "."   # Using current directory since SSH lands in public_html
         run: |
           mkdir -p ~/.ssh
           echo "$remote_key" > ~/.ssh/gh_actions_key
@@ -93,7 +93,7 @@ jobs:
           remote_port: "22"
           remote_user: ${{ secrets.PROD_USER }}
           local_dir: "dist/"
-          remote_dir: ${{ secrets.PROD_PATH }}
+          remote_dir: "."   # Using current directory since SSH lands in public_html
         run: |
           rsync -avzr -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
 
@@ -103,7 +103,7 @@ jobs:
           remote_port: "22"
           remote_user: ${{ secrets.PROD_USER }}
           remote_key: ${{ secrets.PROD_SSH_KEY }}
-          remote_dir: ${{ secrets.PROD_PATH }}
+          remote_dir: "."   # Using current directory since SSH lands in public_html
         run: |
           mkdir -p ~/.ssh
           echo "$remote_key" > ~/.ssh/gh_actions_key
