@@ -11,7 +11,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -23,6 +23,9 @@ jobs:
 
       - name: Install Node Dependencies
         run: npm ci
+
+      - name: Install Global Build Tools
+        run: npm install -g terser
 
       - name: Install PHP Dependencies
         run: composer install --no-dev
@@ -51,22 +54,58 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Install PHP dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Install Global Build Tools
+        run: npm install -g terser
+
+      - name: Install PHP Dependencies
         run: composer install --no-dev
 
-      - name: Deploy to Production
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            cd /public_html
-            git pull origin main
-            composer install --no-dev
-            npm run build
-            ./vendor/bin/phinx migrate -e production
-            sudo systemctl restart php-fpm
+      - name: Build and Prepare Dist Folder (Production)
+        run: |
+          npm run build
+          mkdir -p dist
+          rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
+
+      - name: Setup SSH Key for Production
+        env:
+          remote_key: ${{ secrets.PROD_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$remote_key" > ~/.ssh/gh_actions_key
+          chmod 600 ~/.ssh/gh_actions_key
+
+      - name: Deploy to Production via rsync
+        env:
+          remote_host: ${{ secrets.PROD_HOST }}
+          remote_port: "22"
+          remote_user: ${{ secrets.PROD_USER }}
+          local_dir: "dist/"
+          remote_dir: ${{ secrets.PROD_PATH }}
+        run: |
+          rsync -avzr -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
+
+      - name: Run Post-Deployment Commands on Production
+        env:
+          remote_host: ${{ secrets.PROD_HOST }}
+          remote_port: "22"
+          remote_user: ${{ secrets.PROD_USER }}
+          remote_key: ${{ secrets.PROD_SSH_KEY }}
+          remote_dir: ${{ secrets.PROD_PATH }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$remote_key" > ~/.ssh/gh_actions_key
+          chmod 600 ~/.ssh/gh_actions_key
+          ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no ${remote_user}@${remote_host} "cd ${remote_dir} && ./vendor/bin/phinx migrate -e production && sudo systemctl restart php-fpm"
