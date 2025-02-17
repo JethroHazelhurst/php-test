@@ -1,33 +1,24 @@
-name: deploy
+name: Deploy to Cloudways
+
 on:
   push:
     branches:
-      - develop
+      - main  # Adjust based on your deployment branch
+
 jobs:
-  new-version-release:
+  deploy:
     runs-on: ubuntu-latest
- 
+
     steps:
- 
-      - uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Deploy to Cloudways
+        uses: roelmagdaleno/cloudways-api-git-pull-action@v1.3.0
         with:
-          fetch-depth: 0
- 
-      - name: Build dist folder
-        run: |
-          mkdir -p dist
-          rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
- 
-      - name: Deploy with rsync
-        env:
-          remote_host: ${{ secrets.CLOUDWAYS_HOST }}
-          remote_port: "22"
-          remote_user: ${{ secrets.CLOUDWAYS_USER }}
-          remote_key: ${{ secrets.CLOUDWAYS_SSH_PRIVATE_KEY }}
-          local_dir: "dist/"
-          remote_dir: ${{ secrets.CLOUDWAYS_PATH_STAGING }}
-        run: |
-          mkdir ~/.ssh
-          echo "$remote_key" > ~/.ssh/gh_actions_key
-          chmod 600 ~/.ssh/gh_actions_key
-          rsync -avzr -e "ssh -p ${remote_port} -i ~/.ssh/gh_actions_key -o StrictHostKeyChecking=no" ${local_dir} ${remote_user}@${remote_host}:${remote_dir}
+          email: ${{ secrets.CLOUDWAYS_EMAIL }}
+          api-key: ${{ secrets.CLOUDWAYS_API_KEY }}
+          server-id: ${{ secrets.CLOUDWAYS_SERVER_ID }}
+          app-id: ${{ secrets.CLOUDWAYS_APP_ID }}
+          branch-name: ${{ secrets.CLOUDWAYS_BRANCH_NAME }}
+          deploy-path: ${{ secrets.CLOUDWAYS_DEPLOY_PATH }}

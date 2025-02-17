@@ -1,4 +1,6 @@
 .env
+.htaccess
 bs-config.js
+gitautodeploy.php
 node_modules/
 vendor/
