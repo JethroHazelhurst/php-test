@@ -3,7 +3,7 @@ name: Deploy to Cloudways
 on:
   push:
     branches:
-      - main  # Adjust based on your deployment branch
+      - develop  # Adjust based on your deployment branch
 
 jobs:
   deploy:
@@ -22,3 +22,38 @@ jobs:
           app-id: ${{ secrets.CLOUDWAYS_APP_ID }}
           branch-name: ${{ secrets.CLOUDWAYS_BRANCH_NAME }}
           deploy-path: ${{ secrets.CLOUDWAYS_DEPLOY_PATH }}
+
+      - name: SSH into Cloudways and Run Post-Deployment Steps
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CLOUDWAYS_SERVER_IP }}
+          username: master
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.CLOUDWAYS_DEPLOY_PATH }}
+
+            echo "Pulling latest code..."
+            git pull origin develop
+
+            echo "Installing PHP dependencies..."
+            composer install --no-dev --optimize-autoloader
+
+            echo "Setting up environment variables..."
+            if [ ! -f ".env" ]; then
+              cp .env.example .env
+            fi
+
+            echo "Running Phinx migrations..."
+            vendor/bin/phinx migrate || true
+
+            echo "Running Phinx seeders (if applicable)..."
+            vendor/bin/phinx seed:run || true
+
+            echo "Clearing and caching configurations..."
+            php artisan cache:clear || true
+            php artisan config:cache || true
+
+            echo "Restarting PHP-FPM to apply changes..."
+            sudo service php8.2-fpm restart || true
+
+            echo "Deployment completed successfully!"
