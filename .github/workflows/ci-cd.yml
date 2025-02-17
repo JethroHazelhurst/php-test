@@ -24,12 +24,10 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
-            cd /home/master/applications/prkwvvdmaj/public_html
+            cd /public_html
             git pull origin develop
             composer install --no-dev
             npm run build
-            ./vendor/bin/phinx migrate
-            sudo systemctl restart php-fpm
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
