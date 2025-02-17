@@ -16,12 +16,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install PHP dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Install PHP Dependencies
         run: composer install --no-dev
 
       - name: Build and Prepare Dist Folder (Staging)
         run: |
-          # (Optional) Run any build commands, e.g., if you have JS assets:
           npm run build
           mkdir -p dist
           rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
