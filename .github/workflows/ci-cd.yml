@@ -36,21 +36,14 @@ jobs:
           mkdir -p dist
           rsync -r --exclude 'dist' --exclude '.git' --exclude '.github' --exclude '.gitignore' . dist
 
-      - name: Setup SSH Key for Staging (Master)
-        env:
-          remote_key: ${{ secrets.MASTER_SECRET_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$remote_key" > ~/.ssh/gh_actions_key
-          chmod 600 ~/.ssh/gh_actions_key
-
       - name: Deploy to Staging via rsync
         env:
-          remote_host: ${{ secrets.STAGING_HOST }}
+          remote_host: ${{ secrets.CLOUDWAYS_HOST }}
           remote_port: "22"
-          remote_user: ${{ secrets.MASTER_USER }}
+          remote_user: ${{ secrets.CLOUDWAYS_USER }}
+          remote_key: ${{ secrets.CLOUDWAYS_SSH_PRIVATE_KEY }}
           local_dir: "dist/"
-          remote_dir: "/home/1325249.cloudwaysapps.com/prkwvvdmaj"
+          remote_dir: ${{ secrets.CLOUDWAYS_PATH_STAGING }}
         run: |
           rsync -avzr --no-times --no-perms \
             --exclude ".git" \
