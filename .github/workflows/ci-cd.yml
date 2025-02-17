@@ -23,9 +23,8 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
-          ssh_options: -o StrictHostKeyChecking=no
           script: |
-            cd /home/master/applications/jrupzdshbp/public_html
+            cd /home/master/applications/prkwvvdmaj/public_html
             git pull origin develop
             composer install --no-dev
             npm run build
@@ -48,7 +47,6 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          ssh_options: -o StrictHostKeyChecking=no
           script: |
             cd /home/master/applications/yechgrbwse/public_html
             git pull origin main
