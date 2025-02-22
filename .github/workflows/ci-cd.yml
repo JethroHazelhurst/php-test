@@ -48,7 +48,8 @@ jobs:
 
             echo "🛠 Setting up environment variables..."
             if [ ! -f ".env" ]; then
-              cp .env.example .env
+              echo "Creating .env file from GitHub Secret..."
+              echo "${{ secrets.ENV_FILE }}" | base64 --decode > .env
             fi
 
             echo "🗄 Running Phinx migrations..."
